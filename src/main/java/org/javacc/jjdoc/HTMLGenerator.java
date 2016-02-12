@@ -68,7 +68,7 @@ public class HTMLGenerator
   
   private String escape(String s)
   {
-	  return s;
+	  return s.replaceAll("\\|\\|", "\\\\|\\\\|");
 /*    StringBuilder ss = new StringBuilder(s.length());
     for (int i = 0; i < s.length(); i++)
     {
