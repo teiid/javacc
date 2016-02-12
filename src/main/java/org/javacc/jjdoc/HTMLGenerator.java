@@ -555,4 +555,14 @@ public class HTMLGenerator
   {
     this.omit = false;
   }
+  
+    @Override
+	public void handleTokenProduction(TokenProduction tp) {
+    	String token = JJDoc.getStandardTokenProductionText(tp);
+        if (!token.equals("")) {
+            tokenStart(tp);
+            text(token);
+            tokenEnd(tp);
+        }
+	}
 }

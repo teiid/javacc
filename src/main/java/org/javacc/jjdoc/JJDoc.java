@@ -81,55 +81,63 @@ public class JJDoc extends JJDocGlobals {
   */
 
   private static void emitTokenProductions(Generator gen, List prods) {
-    gen.tokensStart();
-    // FIXME there are many empty productions here
-    for (Iterator it = prods.iterator(); it.hasNext();) {
-      TokenProduction tp = (TokenProduction)it.next();
-      emitTopLevelSpecialTokens(tp.firstToken, gen);
+	    gen.tokensStart();
+	    // FIXME there are many empty productions here
+	    for (Iterator it = prods.iterator(); it.hasNext();) {
+	      TokenProduction tp = (TokenProduction)it.next();
+	      emitTopLevelSpecialTokens(tp.firstToken, gen);
 
-      String token = "";
-      if (tp.isExplicit) {
-        if (tp.lexStates == null) {
-         token += "<*> ";
-        } else {
-          token += "<";
-          for (int i = 0; i < tp.lexStates.length; ++i) {
-            token += tp.lexStates[i];
-            if (i < tp.lexStates.length - 1) {
-              token += ",";
-            }
-          }
-          token += "> ";
-        }
-        token += TokenProduction.kindImage[tp.kind];
-        if (tp.ignoreCase) {
-          token += " [IGNORE_CASE]";
-        }
-        token += " : {\n";
-        for (Iterator it2 = tp.respecs.iterator(); it2.hasNext();) {
-          RegExprSpec res = (RegExprSpec)it2.next();
+	      
+	      
+	      gen.handleTokenProduction(tp);
+	      
+//	      if (!token.equals("")) {
+//	        gen.tokenStart(tp);
+//	        String token = getStandardTokenProductionText(tp);
+//	          gen.text(token);
+//	        gen.tokenEnd(tp);
+//	      }
+	    }
+	    gen.tokensEnd();
+	  }
+	public static String getStandardTokenProductionText(TokenProduction tp) {
+	    String token = "";
+	      if (tp.isExplicit) {
+	        if (tp.lexStates == null) {
+	         token += "<*> ";
+	        } else {
+	          token += "<";
+	          for (int i = 0; i < tp.lexStates.length; ++i) {
+	            token += tp.lexStates[i];
+	            if (i < tp.lexStates.length - 1) {
+	              token += ",";
+	            }
+	          }
+	          token += "> ";
+	        }
+	        token += TokenProduction.kindImage[tp.kind];
+	        if (tp.ignoreCase) {
+	          token += " [IGNORE_CASE]";
+	        }
+	        token += " : {\n";
+	        for (Iterator it2 = tp.respecs.iterator(); it2.hasNext();) {
+	          RegExprSpec res = (RegExprSpec)it2.next();
 
-          token += emitRE(res.rexp);
+	          token += emitRE(res.rexp);
 
-          if (res.nsTok != null) {
-            token += " : " + res.nsTok.image;
-          }
+	          if (res.nsTok != null) {
+	            token += " : " + res.nsTok.image;
+	          }
 
-          token += "\n";
-          if (it2.hasNext()) {
-            token += "| ";
-          }
-        }
-        token += "}\n\n";
-      }
-      if (!token.equals("")) {
-        gen.tokenStart(tp);
-        gen.text(token);
-        gen.tokenEnd(tp);
-      }
-    }
-    gen.tokensEnd();
-  }
+	          token += "\n";
+	          if (it2.hasNext()) {
+	            token += "| ";
+	          }
+	        }
+	        token += "}\n\n";
+	      }
+	    return token;
+	}
 
   private static void emitNormalProductions(Generator gen, List prods) {
     gen.nonterminalsStart();
