@@ -24,9 +24,9 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * Heavily modified from the original form to produce asciidoc
- * 
+ *
  */
 
 package org.javacc.jjdoc;
@@ -38,6 +38,7 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
@@ -52,12 +53,12 @@ public class HTMLGenerator
 {
   private TreeMap<String, Set<String>> prods = new TreeMap();
   StringWriter sw;
-  
+
   private void println(String s)
   {
     print(s + "\n");
   }
-  
+
   public void text(String s)
   {
     if (this.omit) {
@@ -65,7 +66,7 @@ public class HTMLGenerator
     }
     print(escape(s));
   }
-  
+
   private String escape(String s)
   {
 	  return s.replaceAll("\\|\\|", "\\\\|\\\\|");
@@ -75,28 +76,28 @@ public class HTMLGenerator
       char c = s.charAt(i);
       switch (c)
       {
-      case '*': 
-      case '+': 
-      case '-': 
-      case '[': 
-      case ']': 
-      case '{': 
-      case '|': 
-      case '}': 
+      case '*':
+      case '+':
+      case '-':
+      case '[':
+      case ']':
+      case '{':
+      case '|':
+      case '}':
         ss.append('\\').append(c);
         break;
-      default: 
+      default:
         ss.append(c);
       }
     }
     return ss.toString();*/
   }
-  
+
   public void print(String s)
   {
     this.ostr.print(s);
   }
-  
+
   public void documentStart()
   {
     this.sw = new StringWriter();
@@ -113,14 +114,14 @@ public class HTMLGenerator
       if (!hashMap.containsKey("name")) {
         hashMap.put("name", label);
       }
-      if (Boolean.valueOf((String)hashMap.get("unused")).booleanValue()) {
+      if (Boolean.valueOf(hashMap.get("unused")).booleanValue()) {
         iter.remove();
       } else {
         this.prodMap.put(label, hashMap);
       }
     }
   }
-  
+
   private void loadProps(Token t)
   {
     this.p.clear();
@@ -136,12 +137,15 @@ public class HTMLGenerator
       }
     }
   }
-  
+
   public void documentEnd()
   {
     this.ostr.close();
     PrintWriter p = create_output_stream();
-    p.append("= BNF for SQL Grammar\n\n");
+    p.append("// Assembly included in the following assemblies:\n" +
+            "//master.adoc\n" +
+            "[id=\"bnf-for-sql-grammar\"]\n"
+            + "= BNF for SQL Grammar\n\n");
     p.append("* Main Entry Points\n");
     for (Map.Entry<String, Map<String, String>> prodEntry : this.prodMap.entrySet()) {
       if (Boolean.valueOf((String)((Map)prodEntry.getValue()).get("index")).booleanValue()) {
@@ -154,7 +158,7 @@ public class HTMLGenerator
     p.append("* <<Tokens, Tokens>>\n");
     p.append("* <<Production Cross-Reference, Production Cross-Reference>>\n");
     p.append("* <<Productions, Productions>>\n");
-    
+
     //reserved
     p.append("\n== Reserved Keywords\n");
     p.append("\n|===\n|Keyword |Usage\n");
@@ -164,7 +168,7 @@ public class HTMLGenerator
       }
     }
     p.append("\n|===\n");
-    
+
     //non reserved
     p.append("\n== Non-Reserved Keywords\n");
     p.append("\n|===\n|Name |Usage\n");
@@ -172,14 +176,14 @@ public class HTMLGenerator
       addKeyWordEntry(p, keyword, this.keywordLiteralMap.get(keyword));
     }
     p.append("\n|===\n");
-    
+
     //reserved for future
     p.append("\n== Reserved Keywords For Future Use\n");
     p.append("\n|===\n");
     int i = 0;
     for (Object entry : this.keywordLiteralMap.entrySet())
     {
-      Set<String> productions = (Set)this.tokenMap.get(((Map.Entry)entry).getKey());
+      Set<String> productions = this.tokenMap.get(((Map.Entry)entry).getKey());
       if ((productions.isEmpty()) && (!this.nonReserved.contains(((Map.Entry)entry).getKey())))
       {
         p.append("|");
@@ -194,7 +198,7 @@ public class HTMLGenerator
     	p.append("\n");
     }
     p.append("|===\n");
-    
+
     //tokens
     p.append("\n== Tokens\n");
     p.append("\n|===\n|Name |Definition |Usage\n");
@@ -211,22 +215,28 @@ public class HTMLGenerator
       }
     }
     p.append("\n|===\n");
-    
+
     //cross-reference
     p.append("\n== Production Cross-Reference\n");
     p.append("\n|===\n|Name |Usage\n");
-    for (Object entry : this.prods.entrySet())
+    for (Entry<String, Set<String>> entry : this.prods.entrySet())
     {
-      p.append("\n|").append("[[usage_" + (String)((Map.Entry)entry).getKey() + "]]_<<" + ((Map.Entry)entry).getKey() + ", ").append((String)((Map)this.prodMap.get(((Map.Entry)entry).getKey())).get("name")).append(">>_");
-      p.append("\n|");
-      appendProductionList(p, (Set)((Map.Entry)entry).getValue());
+      p.append("\n|").append("[[usage_" + entry.getKey() + "]]_");
+      Map<String, String> map = this.prodMap.get(entry.getKey());
+      p.append("<<").append(entry.getKey() + ", ").append(map.get("name")).append(">>");
+      p.append("_\n|");
+      appendProductionList(p, entry.getValue());
       p.append("\n");
     }
     p.append("\n|===\n");
-    p.append(this.sw.getBuffer().toString());
+    String val = this.sw.getBuffer().toString();
+    if (val.endsWith("\n")) {
+        val = val.substring(0, val.length()-1);
+    }
+    p.append(val);
     p.close();
   }
-  
+
   private void appendProductionList(PrintWriter p, Set<String> prods)
   {
     for (Iterator<String> iter = prods.iterator(); iter.hasNext();)
@@ -239,10 +249,10 @@ public class HTMLGenerator
       }
     }
   }
-  
+
   private void addKeyWordEntry(PrintWriter p, String keyword, String literal)
   {
-    Set<String> productions = (Set)this.tokenMap.get(keyword);
+    Set<String> productions = this.tokenMap.get(keyword);
     if (productions.isEmpty()) {
       return;
     }
@@ -251,7 +261,7 @@ public class HTMLGenerator
     appendProductionList(p, productions);
     p.append("\n");
   }
-  
+
   boolean omit = false;
   private Map<String, Set<String>> tokenMap = new TreeMap();
   private Map<String, String> keywordLiteralMap = new TreeMap();
@@ -260,9 +270,9 @@ public class HTMLGenerator
   private Set<String> nonReserved = new TreeSet();
   private Properties p = new Properties();
   private Map<String, Map<String, String>> prodMap = new TreeMap();
-  
+
   public void specialTokens(String s) {}
-  
+
   public void tokenStart(TokenProduction tp)
   {
     if ((tp.lexStates != null) && (tp.lexStates[0].equals("DEFAULT")) && (tp.kind == 0)) {
@@ -297,7 +307,7 @@ public class HTMLGenerator
     }
     this.omit = true;
   }
-  
+
   private String emitRE(RegularExpression re)
   {
     String returnString = "";
@@ -432,36 +442,39 @@ public class HTMLGenerator
     }
     return returnString;
   }
-  
+
   public void tokenEnd(TokenProduction tp)
   {
     this.omit = false;
   }
-  
+
   public void nonterminalsStart()
   {
     println("\n== Productions\n");
   }
-  
+
   String production = null;
-  
+
   public void nonterminalsEnd() {}
-  
+
   public void tokensStart() {}
-  
+
   public void tokensEnd() {}
-  
+
   public void javacode(JavaCodeProduction jp) {}
-  
+
   public void productionStart(NormalProduction np)
   {
+    if (this.prods.get(np.getLhs()) == null) {
+        this.prods.put(np.getLhs(), new TreeSet());
+    }
     this.production = np.getLhs();
     print("\n=== [[" + np.getLhs() + "]]_<<usage_" + np.getLhs() + ", "+ (String)((Map)this.prodMap.get(np.getLhs())).get("name") + ">>_ ::= \n");
   }
-  
+
   public void productionEnd(NormalProduction np)
   {
-    Map<String, String> vals = (Map)this.prodMap.get(np.getLhs());
+    Map<String, String> vals = this.prodMap.get(np.getLhs());
     String description = vals.get("description");
     if (description != null) {
       println("\n\n" + description);
@@ -472,20 +485,20 @@ public class HTMLGenerator
     }
     println("\n'''\n");
   }
-  
+
   public void expansionStart(Expansion e, boolean first)
   {
     print("\n* ");
   }
-  
+
   public void expansionEnd(Expansion e, boolean first)
   {
     print("\n");
   }
-  
+
   public void nonTerminalStart(NonTerminal nt)
   {
-    Set<String> vals = (Set)this.prods.get(nt.getName());
+    Set<String> vals = this.prods.get(nt.getName());
     if (vals == null)
     {
       vals = new TreeSet();
@@ -495,7 +508,7 @@ public class HTMLGenerator
     print(prodLink(nt.getName(), true));
     this.omit = true;
   }
-  
+
   private String prodLink(String label, boolean enclose)
   {
     String result = "<<" + label + "," + (String)((Map)this.prodMap.get(label)).get("name") + ">>";
@@ -504,28 +517,28 @@ public class HTMLGenerator
     }
     return result;
   }
-  
+
   public void nonTerminalEnd(NonTerminal nt)
   {
     this.omit = false;
   }
-  
+
   public void reStart(RegularExpression r)
   {
     if (!(r instanceof RJustName)) {
       return;
     }
-    Set<String> vals = (Set)this.tokenMap.get(r.label);
+    Set<String> vals = this.tokenMap.get(r.label);
     if (vals != null) {
       vals.add(this.production);
     }
-    if ("nonReserved".equals(this.production)) {
+    if (this.production.toLowerCase().endsWith("nonreserved")) {
       this.nonReserved.add(r.label);
     }
     print(tokenLink(r.label));
     this.omit = true;
   }
-  
+
   private String tokenLink(String tokenLabel)
   {
     String keyword = this.keywordLiteralMap.get(tokenLabel);
@@ -550,12 +563,12 @@ public class HTMLGenerator
     }
     return sb.toString();
   }
-  
+
   public void reEnd(RegularExpression r)
   {
     this.omit = false;
   }
-  
+
     @Override
 	public void handleTokenProduction(TokenProduction tp) {
     	String token = JJDoc.getStandardTokenProductionText(tp);
